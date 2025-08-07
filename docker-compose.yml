@@ -5,5 +5,8 @@ services:
     build: .
     ports:
       - "7171:7171"
+    environment:
+      - GEMINI_API_KEYS=${GEMINI_API_KEYS}
     env_file:
       - .env
+    restart: unless-stopped
