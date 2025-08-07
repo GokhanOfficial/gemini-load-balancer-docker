@@ -1,17 +1,23 @@
-# Use the official Node.js runtime as the base image
-FROM node:22-alpine
-
-# Set the working directory in the container
+# Stage 1: Builder
+# This stage installs all dependencies, including devDependencies
+FROM node:18-alpine AS builder
 WORKDIR /app
-
-# Copy package.json and package-lock.json (if available) to the working directory
 COPY package*.json ./
-
-# Install the application dependencies
 RUN npm install
 
-# Expose the port that the application will run on
+# Stage 2: Production
+# This stage creates the final, lean image
+FROM node:18-alpine
+WORKDIR /app
+
+# Copy only the production node_modules from the builder stage
+COPY --from=builder /app/node_modules ./node_modules
+
+# Copy the application code
+COPY . .
+
+# Expose the port
 EXPOSE 7171
 
-# Start the application
+# Run the application
 CMD ["npm", "run", "start"]
