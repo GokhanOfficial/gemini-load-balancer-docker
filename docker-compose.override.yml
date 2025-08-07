@@ -1,0 +1,7 @@
+version: '3.8'
+
+services:
+  gemini-load-balancer:
+    environment:
+      - NODE_ENV=development
+    command: npm run dev

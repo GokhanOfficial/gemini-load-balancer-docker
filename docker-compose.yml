@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  gemini-load-balancer:
+    build: .
+    ports:
+      - "7171:7171"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    environment:
+      - NODE_ENV=production
