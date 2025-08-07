@@ -33,7 +33,7 @@ app.get('/', (req, res) => {
 });
 
 // Handle POST requests
-app.post('*', async (req, res) => {
+app.post('*', (req, res) => {
   try {
     // Read API keys from environment variable
     const apiKeys = (process.env.GEMINI_API_KEYS || '').split(',').map(k => k.trim()).filter(Boolean);
@@ -53,7 +53,7 @@ app.post('*', async (req, res) => {
     // Add selected key to query parameters
     targetUrl.searchParams.set('key', selectedApiKey);
 
-    // Create options for the HTTP request
+    // Create options for the HTTPS request
     const options = {
       hostname: targetUrl.hostname,
       port: 443,
@@ -67,7 +67,17 @@ app.post('*', async (req, res) => {
     // Forward the request to Google's API
     const proxyReq = https.request(options, (proxyRes) => {
       // Set CORS headers for the response
-      res.set(corsHeaders);
+      Object.keys(corsHeaders).forEach(key => res.set(key, corsHeaders[key]));
+      
+      // Set the status code from the upstream response
+      res.status(proxyRes.statusCode);
+      
+      // Set headers from the upstream response (excluding hop-by-hop headers)
+      Object.keys(proxyRes.headers).forEach(key => {
+        if (!['connection', 'transfer-encoding'].includes(key.toLowerCase())) {
+          res.set(key, proxyRes.headers[key]);
+        }
+      });
       
       // Pipe the response from Google API to our response
       proxyRes.pipe(res);
@@ -79,7 +89,7 @@ app.post('*', async (req, res) => {
       res.set(corsHeaders).status(500).send('Proxy request failed');
     });
 
-    // Pipe the request body if it exists
+    // Handle request body
     if (req.body) {
       proxyReq.write(JSON.stringify(req.body));
     }
@@ -97,6 +107,15 @@ app.all('*', (req, res) => {
 });
 
 // Start the server
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Gemini Load Balancer is running on port ${PORT}`);
+});
+
+// Add error handling for the server
+server.on('error', (err) => {
+  console.error('Server error:', err);
+});
+
+server.on('listening', () => {
+  console.log(`Server is listening on port ${PORT}`);
 });
