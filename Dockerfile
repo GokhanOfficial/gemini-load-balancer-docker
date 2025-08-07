@@ -1,23 +1,23 @@
-# Stage 1: Builder
-# This stage installs all dependencies, including devDependencies
-FROM node:18-alpine AS builder
+# Use a Python Alpine base image as requested
+FROM python:3.11-slim-alpine
+
+# Install Node.js and npm using Alpine's package manager
+RUN apk add --update nodejs npm
+
+# Set the working directory in the container
 WORKDIR /app
+
+# Copy package configuration files
 COPY package*.json ./
+
+# Install Node.js dependencies
 RUN npm install
 
-# Stage 2: Production
-# This stage creates the final, lean image
-FROM node:18-alpine
-WORKDIR /app
-
-# Copy only the production node_modules from the builder stage
-COPY --from=builder /app/node_modules ./node_modules
-
-# Copy the application code
+# Copy the rest of the application code into the container
 COPY . .
 
-# Expose the port
+# Expose the port the application runs on
 EXPOSE 7171
 
-# Run the application
-CMD ["npm", "run", "start"]
+# Set the command to start the application
+CMD ["node", "server.js"]

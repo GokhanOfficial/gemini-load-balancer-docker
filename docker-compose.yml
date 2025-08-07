@@ -5,9 +5,6 @@ services:
     build: .
     ports:
       - "7171:7171"
-    volumes:
-      - .:/app
-      - /app/node_modules
     environment:
       - GEMINI_API_KEYS=${GEMINI_API_KEYS}
     env_file:
